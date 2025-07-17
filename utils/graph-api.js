@@ -14,7 +14,7 @@ const mockData = require('./mock-data');
  * @param {object} queryParams - Query parameters
  * @returns {Promise<object>} - The API response
  */
-async function callGraphAPI(accessToken, method, path, data = null, queryParams = {}) {
+async function callGraphAPI(accessToken, method, path, data = null, queryParams = {}, customHeaders = {}) {
   // For test tokens, we'll simulate the API call
   if (config.USE_TEST_MODE && accessToken.startsWith('test_access_token_')) {
     console.error(`TEST MODE: Simulating ${method} ${path} API call`);
@@ -80,7 +80,8 @@ async function callGraphAPI(accessToken, method, path, data = null, queryParams 
         method: method,
         headers: {
           'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          ...customHeaders
         }
       };
       
@@ -113,7 +114,11 @@ async function callGraphAPI(accessToken, method, path, data = null, queryParams 
       });
       
       if (data && (method === 'POST' || method === 'PATCH' || method === 'PUT')) {
-        req.write(JSON.stringify(data));
+        if (Buffer.isBuffer(data)) {
+          req.write(data);
+        } else {
+          req.write(JSON.stringify(data));
+        }
       }
       
       req.end();

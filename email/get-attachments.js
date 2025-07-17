@@ -43,28 +43,7 @@ async function handleGetAttachments(args) {
       };
     }
     
-    // Check if Attachments folder exists in OneDrive, create if not
-    let attachmentsFolderId;
-    try {
-      const foldersResponse = await callGraphAPI(accessToken, 'GET', 'me/drive/root/children?$filter=name eq \'Attachments\' and folder ne null');
-      
-      if (foldersResponse.value && foldersResponse.value.length > 0) {
-        attachmentsFolderId = foldersResponse.value[0].id;
-        console.log('Found existing Attachments folder');
-      } else {
-        // Create Attachments folder
-        const createFolderResponse = await callGraphAPI(accessToken, 'POST', 'me/drive/root/children', {
-          name: 'Attachments',
-          folder: {},
-          '@microsoft.graph.conflictBehavior': 'rename'
-        });
-        attachmentsFolderId = createFolderResponse.id;
-        console.log('Created new Attachments folder');
-      }
-    } catch (error) {
-      console.error('Error setting up Attachments folder:', error);
-      throw new Error('Failed to setup OneDrive Attachments folder');
-    }
+    // We'll upload directly to /Attachments/ folder - OneDrive will create it if needed
     
     // Download each attachment
     const downloadedAttachments = [];
@@ -103,7 +82,7 @@ async function handleGetAttachments(args) {
             const uploadResponse = await callGraphAPI(
               accessToken, 
               'PUT', 
-              `me/drive/items/${attachmentsFolderId}:/${fileName}:/content`,
+              `me/drive/root:/Attachments/${fileName}:/content`,
               fileBuffer,
               null,
               { 'Content-Type': 'application/octet-stream' }
