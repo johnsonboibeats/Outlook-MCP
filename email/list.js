@@ -12,7 +12,7 @@ const { ensureAuthenticated } = require('../auth');
  */
 async function handleListEmails(args) {
   const folder = args.folder || "inbox";
-  const count = Math.min(args.count || 10, config.MAX_RESULT_COUNT);
+  const count = Math.min(args.count || 10, config.PAGINATION?.maxPageSize || 100);
   const sharedMailbox = args.sharedMailbox; // New parameter for shared mailbox
   
   try {
