@@ -43,7 +43,41 @@ async function handleGetAttachments(args) {
       };
     }
     
-    // Simple approach: upload to root with EmailAttachment prefix
+    // Find or create Attachments folder using a more robust approach
+    let attachmentsFolderId = null;
+    try {
+      // Try to access the Attachments folder directly first
+      try {
+        const attachmentsFolder = await callGraphAPI(accessToken, 'GET', 'me/drive/root:/Attachments');
+        attachmentsFolderId = attachmentsFolder.id;
+        console.log('Found Attachments folder directly:', attachmentsFolderId);
+      } catch (directError) {
+        console.log('Direct access failed, trying to list root children...');
+        // If direct access fails, list all children and find it
+        const rootItems = await callGraphAPI(accessToken, 'GET', 'me/drive/root/children');
+        const attachmentsFolder = rootItems.value?.find(item => 
+          item.name === 'Attachments' && item.folder !== undefined
+        );
+        
+        if (attachmentsFolder) {
+          attachmentsFolderId = attachmentsFolder.id;
+          console.log('Found Attachments folder in children:', attachmentsFolderId);
+        } else {
+          console.log('Attachments folder not found, creating it...');
+          // Create the folder
+          const newFolder = await callGraphAPI(accessToken, 'POST', 'me/drive/root/children', {
+            name: 'Attachments',
+            folder: {},
+            '@microsoft.graph.conflictBehavior': 'rename'
+          });
+          attachmentsFolderId = newFolder.id;
+          console.log('Created new Attachments folder:', attachmentsFolderId);
+        }
+      }
+    } catch (error) {
+      console.error('Error setting up Attachments folder:', error);
+      throw new Error(`Failed to access Attachments folder: ${error.message}`);
+    }
     
     // Download each attachment
     const downloadedAttachments = [];
@@ -80,8 +114,8 @@ async function handleGetAttachments(args) {
           
           try {
             console.log(`Uploading ${fileName} (${fileBuffer.length} bytes) to OneDrive...`);
-            // Upload to root folder for now (simpler approach)
-            const uploadPath = `me/drive/root:/EmailAttachments_${fileName}:/content`;
+            // Upload to Attachments folder
+            const uploadPath = `me/drive/items/${attachmentsFolderId}:/${fileName}:/content`;
               
             const uploadResponse = await callGraphAPI(
               accessToken, 
@@ -149,7 +183,7 @@ async function handleGetAttachments(args) {
     return {
       content: [{ 
         type: "text", 
-        text: `Downloaded and saved ${attachments.length} attachment(s) to OneDrive root:\n\n${attachmentInfo.join('\n\n')}`
+        text: `Downloaded and saved ${attachments.length} attachment(s) to OneDrive/Attachments:\n\n${attachmentInfo.join('\n\n')}`
       }]
     };
   } catch (error) {
