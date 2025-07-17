@@ -203,8 +203,8 @@ const emailTools = [
     handler: handleMarkRead
   },
   {
-    name: "get-attachments",
-    description: "Gets information about email attachments",
+    name: "download-attachments",
+    description: "Downloads information about email attachments",
     inputSchema: {
       type: "object",
       properties: {
