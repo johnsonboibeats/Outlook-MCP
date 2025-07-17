@@ -1,0 +1,47 @@
+{
+  "name": "outlook-mcp",
+  "version": "1.0.0",
+  "description": "MCP server for Claude to access Outlook data via Microsoft Graph API",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "start-remote": "node index.js --remote",
+    "auth-server": "node auth/server.js",
+    "test-mode": "USE_TEST_MODE=true node index.js",
+    "inspect": "npx @modelcontextprotocol/inspector node index.js",
+    "audit": "npm audit",
+    "audit-fix": "npm audit fix"
+  },
+  "keywords": [
+    "claude",
+    "outlook",
+    "mcp",
+    "microsoft-graph",
+    "email"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.1.0",
+    "dotenv": "^16.5.0",
+    "express": "^4.18.2",
+    "cors": "^2.8.5"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/inspector": "^0.10.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "files": [
+    "index.js",
+    "config.js",
+    "auth/",
+    "calendar/",
+    "email/",
+    "folder/",
+    "rules/",
+    "utils/",
+    "railway.json"
+  ]
+}
