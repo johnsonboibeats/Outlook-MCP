@@ -9,11 +9,18 @@ const config = require('../config');
 let cachedTokens = null;
 
 /**
- * Loads authentication tokens from the token file
+ * Loads authentication tokens from the token file or global storage
  * @returns {object|null} - The loaded tokens or null if not available
  */
 function loadTokenCache() {
   try {
+    // For Railway deployment, check global storage first
+    if (global.outlookTokens) {
+      console.error('[DEBUG] Loading tokens from global storage (Railway mode)');
+      cachedTokens = global.outlookTokens;
+      return cachedTokens;
+    }
+    
     const tokenPath = config.AUTH_CONFIG.tokenStorePath;
     console.error(`[DEBUG] Attempting to load tokens from: ${tokenPath}`);
     console.error(`[DEBUG] HOME directory: ${process.env.HOME}`);
@@ -86,14 +93,22 @@ function loadTokenCache() {
  */
 function saveTokenCache(tokens) {
   try {
-    const tokenPath = config.AUTH_CONFIG.tokenStorePath;
-    console.error(`Saving tokens to: ${tokenPath}`);
-    
-    fs.writeFileSync(tokenPath, JSON.stringify(tokens, null, 2));
-    console.error('Tokens saved successfully');
-    
-    // Update the cache
+    // Always save to global storage for Railway deployment
+    global.outlookTokens = tokens;
     cachedTokens = tokens;
+    console.error('[DEBUG] Tokens saved to global storage (Railway mode)');
+    
+    // Also try to save to file if possible
+    try {
+      const tokenPath = config.AUTH_CONFIG.tokenStorePath;
+      console.error(`Saving tokens to: ${tokenPath}`);
+      
+      fs.writeFileSync(tokenPath, JSON.stringify(tokens, null, 2));
+      console.error('Tokens also saved to file');
+    } catch (fileError) {
+      console.error('Failed to save tokens to file (using global storage only):', fileError.message);
+    }
+    
     return true;
   } catch (error) {
     console.error('Error saving token cache:', error);

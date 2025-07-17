@@ -211,9 +211,9 @@ if (isRemoteMode) {
         return res.status(400).json({ error: tokens.error, description: tokens.error_description });
       }
       
-      // Store tokens (simplified for Railway - in production use secure storage)
-      // Note: Railway ephemeral storage means tokens won't persist across restarts
-      global.outlookTokens = tokens;
+      // Store tokens using the token manager
+      const { saveTokenCache } = require('./auth/token-manager');
+      saveTokenCache(tokens);
       
       res.json({ 
         message: 'Authentication completed successfully!',
