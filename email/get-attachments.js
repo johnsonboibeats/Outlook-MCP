@@ -59,10 +59,10 @@ async function handleGetAttachments(args) {
       try {
         // Skip signature images and inline images based on reliable indicators
         const fileName = attachment.name || `attachment_${attachment.id}`;
-        const isInlineImage = attachment.isInline ||          // Microsoft flag for inline content
-                             attachment.contentId ||          // Has content ID (embedded in HTML)
-                             attachment.contentDisposition === 'inline' || // Disposition indicates inline
-                             (attachment.size && attachment.size < 10000 && attachment.contentType?.startsWith('image/')); // Very small images (likely signatures)
+        const isInlineImage = (attachment.isInline ||          // Microsoft flag for inline content
+                              attachment.contentId ||          // Has content ID (embedded in HTML)
+                              attachment.contentDisposition === 'inline') && // Disposition indicates inline
+                              attachment.contentType?.startsWith('image/'); // Only apply to images, not documents
         
         if (isInlineImage) {
           downloadedAttachments.push({
