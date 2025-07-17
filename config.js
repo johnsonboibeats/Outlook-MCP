@@ -33,7 +33,7 @@ module.exports = {
   AUTH_CONFIG: {
     clientId: process.env.MS_CLIENT_ID || process.env.OUTLOOK_CLIENT_ID || '',
     clientSecret: process.env.MS_CLIENT_SECRET || process.env.OUTLOOK_CLIENT_SECRET || '',
-    redirectUri: process.env.AUTH_REDIRECT_URI || 'http://localhost:3333/auth/callback',
+    redirectUri: process.env.AUTH_REDIRECT_URI || (process.env.RAILWAY_PUBLIC_DOMAIN ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}/auth/callback` : 'http://localhost:3333/auth/callback'),
     scopes: [
       'Mail.Read',
       'Mail.ReadWrite', 
@@ -44,7 +44,7 @@ module.exports = {
       'offline_access'
     ],
     tokenStorePath: path.join(homeDir, '.outlook-mcp-tokens.json'),
-    authServerUrl: process.env.AUTH_SERVER_URL || 'http://localhost:3333'
+    authServerUrl: process.env.AUTH_SERVER_URL || (process.env.RAILWAY_PUBLIC_DOMAIN ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` : 'http://localhost:3333')
   },
   
   // Microsoft Graph API configuration

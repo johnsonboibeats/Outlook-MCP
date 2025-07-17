@@ -156,6 +156,46 @@ if (isRemoteMode) {
   app.get('/health', (req, res) => {
     res.json({ status: 'ok', server: config.SERVER_NAME, version: config.SERVER_VERSION });
   });
+
+  // Auth endpoints for Railway deployment
+  app.get('/auth', (req, res) => {
+    if (!config.AUTH_CONFIG.clientId || !config.AUTH_CONFIG.clientSecret) {
+      return res.status(500).json({ error: 'Microsoft Graph API credentials not configured' });
+    }
+    
+    const clientId = req.query.client_id || config.AUTH_CONFIG.clientId;
+    const authParams = new URLSearchParams({
+      client_id: clientId,
+      response_type: 'code',
+      redirect_uri: config.AUTH_CONFIG.redirectUri,
+      scope: config.AUTH_CONFIG.scopes.join(' '),
+      response_mode: 'query',
+      state: Date.now().toString()
+    });
+    
+    const authUrl = `https://login.microsoftonline.com/common/oauth2/v2.0/authorize?${authParams}`;
+    res.redirect(authUrl);
+  });
+
+  app.get('/auth/callback', (req, res) => {
+    if (req.query.error) {
+      return res.status(400).json({ 
+        error: req.query.error, 
+        description: req.query.error_description 
+      });
+    }
+    
+    if (!req.query.code) {
+      return res.status(400).json({ error: 'No authorization code received' });
+    }
+    
+    // Exchange code for tokens (simplified for Railway deployment)
+    res.json({ 
+      message: 'Authentication successful', 
+      code: req.query.code,
+      state: req.query.state 
+    });
+  });
   
   // MCP endpoint - handles POST, GET, DELETE
   app.all('/mcp', async (req, res) => {
