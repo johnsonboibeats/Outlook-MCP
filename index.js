@@ -214,10 +214,13 @@ if (isRemoteMode) {
   });
   
   const PORT = config.MCP_PORT;
+  const HOST = process.env.RAILWAY_PUBLIC_DOMAIN || `localhost:${PORT}`;
+  const PROTOCOL = process.env.RAILWAY_PUBLIC_DOMAIN ? 'https' : 'http';
+  
   app.listen(PORT, () => {
     console.error(`${config.SERVER_NAME} remote server listening on port ${PORT}`);
-    console.error(`MCP endpoint: http://localhost:${PORT}/mcp`);
-    console.error(`Health check: http://localhost:${PORT}/health`);
+    console.error(`MCP endpoint: ${PROTOCOL}://${HOST}/mcp`);
+    console.error(`Health check: ${PROTOCOL}://${HOST}/health`);
   });
 } else {
   // Start local stdio server
