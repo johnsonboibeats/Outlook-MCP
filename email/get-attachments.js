@@ -79,6 +79,7 @@ async function handleGetAttachments(args) {
           const fileBuffer = Buffer.from(fullAttachment.contentBytes, 'base64');
           
           try {
+            console.log(`Uploading ${fileName} (${fileBuffer.length} bytes) to OneDrive...`);
             const uploadResponse = await callGraphAPI(
               accessToken, 
               'PUT', 
@@ -88,17 +89,20 @@ async function handleGetAttachments(args) {
               { 'Content-Type': 'application/octet-stream' }
             );
             
+            console.log(`Upload response for ${fileName}:`, JSON.stringify(uploadResponse, null, 2));
+            
             const sizeKB = Math.round(attachment.size / 1024);
             downloadedAttachments.push({
               name: fileName,
               contentType: attachment.contentType,
               size: sizeKB,
               id: attachment.id,
-              oneDriveUrl: uploadResponse.webUrl,
+              oneDriveUrl: uploadResponse?.webUrl || `https://onedrive.live.com/`,
               status: 'saved'
             });
           } catch (uploadError) {
             console.error(`Failed to upload ${fileName} to OneDrive:`, uploadError);
+            console.error(`Upload error stack:`, uploadError.stack);
             downloadedAttachments.push({
               name: fileName,
               contentType: attachment.contentType,
