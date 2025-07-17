@@ -41,6 +41,8 @@ module.exports = {
       'User.Read',
       'Calendars.Read',
       'Calendars.ReadWrite',
+      'Files.ReadWrite',
+      'Files.ReadWrite.All',
       'offline_access'
     ],
     tokenStorePath: path.join(homeDir, '.outlook-mcp-tokens.json'),
