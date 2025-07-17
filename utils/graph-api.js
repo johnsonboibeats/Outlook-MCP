@@ -72,7 +72,7 @@ async function callGraphAPI(accessToken, method, path, data = null, queryParams 
       queryString = '?' + existingQuery;
     }
     
-    const url = `${config.GRAPH_API_ENDPOINT}${encodedPath}${queryString}`;
+    const url = `${config.GRAPH_API.endpoint}${encodedPath}${queryString}`;
     console.error(`Full URL: ${url}`);
     
     return new Promise((resolve, reject) => {

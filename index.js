@@ -215,8 +215,23 @@ if (isRemoteMode) {
       const { saveTokenCache } = require('./auth/token-manager');
       saveTokenCache(tokens);
       
-      // Also create an account entry for Railway deployment
-      if (!global.outlookAccount) {
+      // Get user info and create account entry
+      try {
+        const userResponse = await fetch('https://graph.microsoft.com/v1.0/me', {
+          headers: { 'Authorization': `Bearer ${tokens.access_token}` }
+        });
+        const userInfo = await userResponse.json();
+        
+        global.outlookAccount = {
+          id: 'railway-account',
+          displayName: userInfo.displayName || 'Railway Account',
+          userPrincipalName: userInfo.userPrincipalName || userInfo.mail || 'user@railway',
+          hasValidTokens: true,
+          lastUsed: Date.now(),
+          created: Date.now()
+        };
+      } catch (error) {
+        console.error('Failed to get user info:', error);
         global.outlookAccount = {
           id: 'railway-account',
           displayName: 'Railway Account',

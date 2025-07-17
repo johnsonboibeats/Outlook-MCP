@@ -40,7 +40,7 @@ async function handleListEmails(args) {
     const queryParams = {
       $top: count,
       $orderby: 'receivedDateTime desc',
-      $select: config.EMAIL_SELECT_FIELDS
+      $select: config.FIELDS.email.list
     };
     
     // Make API call
