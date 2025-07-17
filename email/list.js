@@ -60,7 +60,7 @@ async function handleListEmails(args) {
     const emailList = response.value.map((email, index) => {
       const sender = email.from ? email.from.emailAddress : { name: 'Unknown', address: 'unknown' };
       const date = new Date(email.receivedDateTime).toLocaleString('en-AU', { 
-        timeZone: 'Australia/Sydney',
+        timeZone: 'Australia/Brisbane',
         year: 'numeric',
         month: '2-digit', 
         day: '2-digit',

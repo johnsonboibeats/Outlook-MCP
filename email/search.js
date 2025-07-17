@@ -260,7 +260,7 @@ function formatSearchResults(response) {
   const emailList = response.value.map((email, index) => {
     const sender = email.from?.emailAddress || { name: 'Unknown', address: 'unknown' };
     const date = new Date(email.receivedDateTime).toLocaleString('en-AU', { 
-      timeZone: 'Australia/Sydney',
+      timeZone: 'Australia/Brisbane',
       year: 'numeric',
       month: '2-digit', 
       day: '2-digit',

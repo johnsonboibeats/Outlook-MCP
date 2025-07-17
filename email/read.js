@@ -55,7 +55,7 @@ async function handleReadEmail(args) {
       const cc = email.ccRecipients && email.ccRecipients.length > 0 ? email.ccRecipients.map(r => `${r.emailAddress.name} (${r.emailAddress.address})`).join(", ") : 'None';
       const bcc = email.bccRecipients && email.bccRecipients.length > 0 ? email.bccRecipients.map(r => `${r.emailAddress.name} (${r.emailAddress.address})`).join(", ") : 'None';
       const date = new Date(email.receivedDateTime).toLocaleString('en-AU', { 
-        timeZone: 'Australia/Sydney',
+        timeZone: 'Australia/Brisbane',
         year: 'numeric',
         month: '2-digit', 
         day: '2-digit',
