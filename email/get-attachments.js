@@ -57,13 +57,30 @@ async function handleGetAttachments(args) {
     
     for (const attachment of attachments) {
       try {
+        // Skip signature images and inline images based on reliable indicators
+        const fileName = attachment.name || `attachment_${attachment.id}`;
+        const isInlineImage = attachment.isInline ||          // Microsoft flag for inline content
+                             attachment.contentId ||          // Has content ID (embedded in HTML)
+                             attachment.contentDisposition === 'inline' || // Disposition indicates inline
+                             (attachment.size && attachment.size < 10000 && attachment.contentType?.startsWith('image/')); // Very small images (likely signatures)
+        
+        if (isInlineImage) {
+          downloadedAttachments.push({
+            name: fileName,
+            contentType: attachment.contentType,
+            size: Math.round(attachment.size / 1024),
+            id: attachment.id,
+            status: 'skipped (signature/inline image)'
+          });
+          continue;
+        }
+        
         // Get the full attachment content
         const attachmentEndpoint = `${endpoint}/${attachment.id}`;
         const fullAttachment = await callGraphAPI(accessToken, 'GET', attachmentEndpoint);
         
         if (fullAttachment.contentBytes) {
           // Save file to disk
-          const fileName = attachment.name || `attachment_${attachment.id}`;
           const filePath = path.join(downloadsDir, fileName);
           const fileBuffer = Buffer.from(fullAttachment.contentBytes, 'base64');
           
@@ -103,6 +120,8 @@ async function handleGetAttachments(args) {
     const attachmentInfo = downloadedAttachments.map(attachment => {
       if (attachment.error) {
         return `📎 ${attachment.name}\n   Type: ${attachment.contentType}\n   Size: ${attachment.size} KB\n   Status: ❌ ${attachment.error}`;
+      } else if (attachment.status === 'skipped (signature/inline image)') {
+        return `📎 ${attachment.name}\n   Type: ${attachment.contentType}\n   Size: ${attachment.size} KB\n   Status: ⏭️ Skipped (signature/inline image)`;
       } else {
         return `📎 ${attachment.name}\n   Type: ${attachment.contentType}\n   Size: ${attachment.size} KB\n   Status: ✅ Saved to disk\n   Path: ${attachment.filePath}`;
       }
