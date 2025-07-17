@@ -177,7 +177,7 @@ if (isRemoteMode) {
     res.redirect(authUrl);
   });
 
-  app.get('/auth/callback', (req, res) => {
+  app.get('/auth/callback', async (req, res) => {
     if (req.query.error) {
       return res.status(400).json({ 
         error: req.query.error, 
@@ -189,12 +189,41 @@ if (isRemoteMode) {
       return res.status(400).json({ error: 'No authorization code received' });
     }
     
-    // Exchange code for tokens (simplified for Railway deployment)
-    res.json({ 
-      message: 'Authentication successful', 
-      code: req.query.code,
-      state: req.query.state 
-    });
+    try {
+      // Exchange code for tokens
+      const tokenData = new URLSearchParams({
+        client_id: config.AUTH_CONFIG.clientId,
+        client_secret: config.AUTH_CONFIG.clientSecret,
+        code: req.query.code,
+        redirect_uri: config.AUTH_CONFIG.redirectUri,
+        grant_type: 'authorization_code'
+      });
+      
+      const tokenResponse = await fetch('https://login.microsoftonline.com/common/oauth2/v2.0/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: tokenData
+      });
+      
+      const tokens = await tokenResponse.json();
+      
+      if (tokens.error) {
+        return res.status(400).json({ error: tokens.error, description: tokens.error_description });
+      }
+      
+      // Store tokens (simplified for Railway - in production use secure storage)
+      // Note: Railway ephemeral storage means tokens won't persist across restarts
+      global.outlookTokens = tokens;
+      
+      res.json({ 
+        message: 'Authentication completed successfully!',
+        expires_in: tokens.expires_in,
+        scope: tokens.scope
+      });
+    } catch (error) {
+      console.error('Token exchange error:', error);
+      res.status(500).json({ error: 'Failed to exchange code for tokens' });
+    }
   });
   
   // MCP endpoint - handles POST, GET, DELETE
