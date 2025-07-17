@@ -17,7 +17,7 @@ const isTestMode = process.env.USE_TEST_MODE === 'true';
 
 module.exports = {
   // Server information
-  SERVER_NAME: 'outlook-assistant',
+  SERVER_NAME: 'outlook-mcp',
   SERVER_VERSION: '1.0.0',
   
   // Environment settings
