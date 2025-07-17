@@ -59,7 +59,15 @@ async function handleListEmails(args) {
     // Format results
     const emailList = response.value.map((email, index) => {
       const sender = email.from ? email.from.emailAddress : { name: 'Unknown', address: 'unknown' };
-      const date = new Date(email.receivedDateTime).toLocaleString();
+      const date = new Date(email.receivedDateTime).toLocaleString('en-AU', { 
+        timeZone: 'Australia/Sydney',
+        year: 'numeric',
+        month: '2-digit', 
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+      });
       const readStatus = email.isRead ? '' : '[UNREAD] ';
       
       return `${index + 1}. ${readStatus}${date} - From: ${sender.name} (${sender.address})\nSubject: ${email.subject}\nID: ${email.id}\n`;
