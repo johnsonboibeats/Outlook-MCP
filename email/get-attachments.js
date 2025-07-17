@@ -43,16 +43,49 @@ async function handleGetAttachments(args) {
       };
     }
     
-    // Format attachment information
-    const attachmentInfo = attachments.map(attachment => {
-      const sizeKB = Math.round(attachment.size / 1024);
-      return `📎 ${attachment.name}\n   Type: ${attachment.contentType}\n   Size: ${sizeKB} KB\n   ID: ${attachment.id}`;
+    // Download each attachment
+    const downloadedAttachments = [];
+    
+    for (const attachment of attachments) {
+      try {
+        // Get the full attachment content
+        const attachmentEndpoint = `${endpoint}/${attachment.id}`;
+        const fullAttachment = await callGraphAPI(accessToken, 'GET', attachmentEndpoint);
+        
+        const sizeKB = Math.round(attachment.size / 1024);
+        downloadedAttachments.push({
+          name: attachment.name,
+          contentType: attachment.contentType,
+          size: sizeKB,
+          id: attachment.id,
+          content: fullAttachment.contentBytes // Base64 encoded content
+        });
+      } catch (error) {
+        console.error(`Failed to download attachment ${attachment.name}:`, error);
+        downloadedAttachments.push({
+          name: attachment.name,
+          contentType: attachment.contentType,
+          size: Math.round(attachment.size / 1024),
+          id: attachment.id,
+          error: `Failed to download: ${error.message}`
+        });
+      }
+    }
+    
+    // Format results
+    const attachmentInfo = downloadedAttachments.map(attachment => {
+      if (attachment.error) {
+        return `📎 ${attachment.name}\n   Type: ${attachment.contentType}\n   Size: ${attachment.size} KB\n   Status: ❌ ${attachment.error}`;
+      } else {
+        const contentPreview = attachment.content ? `✅ Downloaded (${attachment.content.length} base64 chars)` : '❌ No content';
+        return `📎 ${attachment.name}\n   Type: ${attachment.contentType}\n   Size: ${attachment.size} KB\n   Status: ${contentPreview}\n   Content: ${attachment.content || 'N/A'}`;
+      }
     });
     
     return {
       content: [{ 
         type: "text", 
-        text: `Found ${attachments.length} attachment(s):\n\n${attachmentInfo.join('\n\n')}\n\nNote: This tool shows attachment metadata. To download attachments, you would need additional implementation with file system access.`
+        text: `Downloaded ${attachments.length} attachment(s):\n\n${attachmentInfo.join('\n\n')}`
       }]
     };
   } catch (error) {
