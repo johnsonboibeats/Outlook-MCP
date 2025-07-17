@@ -43,31 +43,7 @@ async function handleGetAttachments(args) {
       };
     }
     
-    // Find or create Attachments folder
-    let attachmentsFolderId = null;
-    try {
-      // First, try to find existing Attachments folder
-      const rootItems = await callGraphAPI(accessToken, 'GET', 'me/drive/root/children');
-      const attachmentsFolder = rootItems.value?.find(item => item.name === 'Attachments' && item.folder);
-      
-      if (attachmentsFolder) {
-        attachmentsFolderId = attachmentsFolder.id;
-        console.log('Found existing Attachments folder:', attachmentsFolderId);
-      } else {
-        // Create Attachments folder
-        const newFolder = await callGraphAPI(accessToken, 'POST', 'me/drive/root/children', {
-          name: 'Attachments',
-          folder: {},
-          '@microsoft.graph.conflictBehavior': 'rename'
-        });
-        attachmentsFolderId = newFolder.id;
-        console.log('Created new Attachments folder:', attachmentsFolderId);
-      }
-    } catch (error) {
-      console.error('Error setting up Attachments folder:', error);
-      // Fall back to root folder
-      attachmentsFolderId = null;
-    }
+    // Simple approach: upload to root with EmailAttachment prefix
     
     // Download each attachment
     const downloadedAttachments = [];
@@ -104,10 +80,8 @@ async function handleGetAttachments(args) {
           
           try {
             console.log(`Uploading ${fileName} (${fileBuffer.length} bytes) to OneDrive...`);
-            // Upload to Attachments folder or root if folder not found
-            const uploadPath = attachmentsFolderId 
-              ? `me/drive/items/${attachmentsFolderId}:/${fileName}:/content`
-              : `me/drive/root:/${fileName}:/content`;
+            // Upload to root folder for now (simpler approach)
+            const uploadPath = `me/drive/root:/EmailAttachments_${fileName}:/content`;
               
             const uploadResponse = await callGraphAPI(
               accessToken, 
@@ -175,7 +149,7 @@ async function handleGetAttachments(args) {
     return {
       content: [{ 
         type: "text", 
-        text: `Downloaded and saved ${attachments.length} attachment(s) to OneDrive/Attachments:\n\n${attachmentInfo.join('\n\n')}`
+        text: `Downloaded and saved ${attachments.length} attachment(s) to OneDrive root:\n\n${attachmentInfo.join('\n\n')}`
       }]
     };
   } catch (error) {
