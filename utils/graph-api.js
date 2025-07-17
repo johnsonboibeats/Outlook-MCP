@@ -39,7 +39,7 @@ async function callGraphAPI(accessToken, method, path, data = null, queryParams 
     
     // Build query string from parameters with special handling for OData filters
     let queryString = '';
-    if (Object.keys(queryParams).length > 0) {
+    if (queryParams && Object.keys(queryParams).length > 0) {
       // Handle $filter parameter specially to ensure proper URI encoding
       const filter = queryParams.$filter;
       if (filter) {
