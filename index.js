@@ -215,6 +215,18 @@ if (isRemoteMode) {
       const { saveTokenCache } = require('./auth/token-manager');
       saveTokenCache(tokens);
       
+      // Also create an account entry for Railway deployment
+      if (!global.outlookAccount) {
+        global.outlookAccount = {
+          id: 'railway-account',
+          displayName: 'Railway Account',
+          userPrincipalName: 'user@railway',
+          hasValidTokens: true,
+          lastUsed: Date.now(),
+          created: Date.now()
+        };
+      }
+      
       res.json({ 
         message: 'Authentication completed successfully!',
         expires_in: tokens.expires_in,

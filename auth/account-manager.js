@@ -185,6 +185,14 @@ class AccountManager {
    * Gets all accounts
    */
   getAllAccounts() {
+    // Check for Railway deployment account in global storage
+    if (global.outlookAccount && global.outlookTokens) {
+      return [{
+        ...global.outlookAccount,
+        hasValidTokens: true
+      }];
+    }
+    
     return Array.from(this.accounts.values()).map(account => ({
       id: account.id,
       userPrincipalName: account.userPrincipalName,
@@ -200,6 +208,11 @@ class AccountManager {
    * Gets access token for an account
    */
   async getAccessToken(accountId) {
+    // Check for Railway deployment account
+    if (accountId === 'railway-account' && global.outlookTokens) {
+      return global.outlookTokens.access_token;
+    }
+    
     const account = this.accounts.get(accountId);
     if (!account || !account.tokens) {
       return null;
