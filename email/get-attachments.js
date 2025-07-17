@@ -5,6 +5,7 @@ const { ensureAuthenticated } = require('../auth');
 const { callGraphAPI } = require('../utils/graph-api');
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
 
 /**
  * Gets attachment information from an email
@@ -45,8 +46,8 @@ async function handleGetAttachments(args) {
       };
     }
     
-    // Create downloads directory if it doesn't exist
-    const downloadsDir = path.join(process.cwd(), 'downloads');
+    // Use user's Downloads folder
+    const downloadsDir = path.join(os.homedir(), 'Downloads');
     if (!fs.existsSync(downloadsDir)) {
       fs.mkdirSync(downloadsDir, { recursive: true });
     }
@@ -110,7 +111,7 @@ async function handleGetAttachments(args) {
     return {
       content: [{ 
         type: "text", 
-        text: `Downloaded and saved ${attachments.length} attachment(s) to ./downloads/:\n\n${attachmentInfo.join('\n\n')}`
+        text: `Downloaded and saved ${attachments.length} attachment(s) to ~/Downloads:\n\n${attachmentInfo.join('\n\n')}`
       }]
     };
   } catch (error) {
