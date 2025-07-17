@@ -1,11 +1,8 @@
 /**
- * Gets information about email attachments and saves them to disk
+ * Gets information about email attachments and saves them to OneDrive
  */
 const { ensureAuthenticated } = require('../auth');
 const { callGraphAPI } = require('../utils/graph-api');
-const fs = require('fs');
-const path = require('path');
-const os = require('os');
 
 /**
  * Gets attachment information from an email
@@ -46,10 +43,27 @@ async function handleGetAttachments(args) {
       };
     }
     
-    // Use user's Downloads folder
-    const downloadsDir = path.join(os.homedir(), 'Downloads');
-    if (!fs.existsSync(downloadsDir)) {
-      fs.mkdirSync(downloadsDir, { recursive: true });
+    // Check if Attachments folder exists in OneDrive, create if not
+    let attachmentsFolderId;
+    try {
+      const foldersResponse = await callGraphAPI(accessToken, 'GET', 'me/drive/root/children?$filter=name eq \'Attachments\' and folder ne null');
+      
+      if (foldersResponse.value && foldersResponse.value.length > 0) {
+        attachmentsFolderId = foldersResponse.value[0].id;
+        console.log('Found existing Attachments folder');
+      } else {
+        // Create Attachments folder
+        const createFolderResponse = await callGraphAPI(accessToken, 'POST', 'me/drive/root/children', {
+          name: 'Attachments',
+          folder: {},
+          '@microsoft.graph.conflictBehavior': 'rename'
+        });
+        attachmentsFolderId = createFolderResponse.id;
+        console.log('Created new Attachments folder');
+      }
+    } catch (error) {
+      console.error('Error setting up Attachments folder:', error);
+      throw new Error('Failed to setup OneDrive Attachments folder');
     }
     
     // Download each attachment
@@ -57,14 +71,16 @@ async function handleGetAttachments(args) {
     
     for (const attachment of attachments) {
       try {
-        // Skip signature images and inline images based on reliable indicators
+        // Skip only signature images and inline images, but allow legitimate image attachments
         const fileName = attachment.name || `attachment_${attachment.id}`;
-        const isInlineImage = (attachment.isInline ||          // Microsoft flag for inline content
-                              attachment.contentId ||          // Has content ID (embedded in HTML)
-                              attachment.contentDisposition === 'inline') && // Disposition indicates inline
-                              attachment.contentType?.startsWith('image/'); // Only apply to images, not documents
+        const isSignatureImage = attachment.contentType?.startsWith('image/') && (
+                                 attachment.isInline ||          // Microsoft flag for inline content
+                                 attachment.contentId ||         // Has content ID (embedded in HTML)
+                                 attachment.contentDisposition === 'inline' || // Disposition indicates inline
+                                 (attachment.size && attachment.size < 5000)   // Very small images (likely signatures)
+                                );
         
-        if (isInlineImage) {
+        if (isSignatureImage) {
           downloadedAttachments.push({
             name: fileName,
             contentType: attachment.contentType,
@@ -80,21 +96,38 @@ async function handleGetAttachments(args) {
         const fullAttachment = await callGraphAPI(accessToken, 'GET', attachmentEndpoint);
         
         if (fullAttachment.contentBytes) {
-          // Save file to disk
-          const filePath = path.join(downloadsDir, fileName);
+          // Upload file to OneDrive Attachments folder
           const fileBuffer = Buffer.from(fullAttachment.contentBytes, 'base64');
           
-          fs.writeFileSync(filePath, fileBuffer);
-          
-          const sizeKB = Math.round(attachment.size / 1024);
-          downloadedAttachments.push({
-            name: fileName,
-            contentType: attachment.contentType,
-            size: sizeKB,
-            id: attachment.id,
-            filePath: filePath,
-            status: 'saved'
-          });
+          try {
+            const uploadResponse = await callGraphAPI(
+              accessToken, 
+              'PUT', 
+              `me/drive/items/${attachmentsFolderId}:/${fileName}:/content`,
+              fileBuffer,
+              null,
+              { 'Content-Type': 'application/octet-stream' }
+            );
+            
+            const sizeKB = Math.round(attachment.size / 1024);
+            downloadedAttachments.push({
+              name: fileName,
+              contentType: attachment.contentType,
+              size: sizeKB,
+              id: attachment.id,
+              oneDriveUrl: uploadResponse.webUrl,
+              status: 'saved'
+            });
+          } catch (uploadError) {
+            console.error(`Failed to upload ${fileName} to OneDrive:`, uploadError);
+            downloadedAttachments.push({
+              name: fileName,
+              contentType: attachment.contentType,
+              size: Math.round(attachment.size / 1024),
+              id: attachment.id,
+              error: `Upload failed: ${uploadError.message}`
+            });
+          }
         } else {
           downloadedAttachments.push({
             name: attachment.name,
@@ -123,14 +156,14 @@ async function handleGetAttachments(args) {
       } else if (attachment.status === 'skipped (signature/inline image)') {
         return `📎 ${attachment.name}\n   Type: ${attachment.contentType}\n   Size: ${attachment.size} KB\n   Status: ⏭️ Skipped (signature/inline image)`;
       } else {
-        return `📎 ${attachment.name}\n   Type: ${attachment.contentType}\n   Size: ${attachment.size} KB\n   Status: ✅ Saved to disk\n   Path: ${attachment.filePath}`;
+        return `📎 ${attachment.name}\n   Type: ${attachment.contentType}\n   Size: ${attachment.size} KB\n   Status: ✅ Saved to OneDrive\n   URL: ${attachment.oneDriveUrl}`;
       }
     });
     
     return {
       content: [{ 
         type: "text", 
-        text: `Downloaded and saved ${attachments.length} attachment(s) to ~/Downloads:\n\n${attachmentInfo.join('\n\n')}`
+        text: `Downloaded and saved ${attachments.length} attachment(s) to OneDrive/Attachments:\n\n${attachmentInfo.join('\n\n')}`
       }]
     };
   } catch (error) {
