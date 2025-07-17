@@ -13,7 +13,7 @@ const { resolveFolderPath } = require('./folder-utils');
  */
 async function handleSearchEmails(args) {
   const folder = args.folder || "inbox";
-  const count = Math.min(args.count || 10, config.MAX_RESULT_COUNT);
+  const count = Math.min(args.count || 10, config.PAGINATION?.maxPageSize || 100);
   const query = args.query || '';
   const from = args.from || '';
   const to = args.to || '';
@@ -100,7 +100,7 @@ async function progressiveSearch(endpoint, accessToken, searchTerms, filterTerms
         // For single term search, only use $search with that term
         const simplifiedParams = {
           $top: count,
-          $select: config.EMAIL_SELECT_FIELDS,
+          $select: config.FIELDS.email.list,
           $orderby: 'receivedDateTime desc'
         };
         
@@ -135,7 +135,7 @@ async function progressiveSearch(endpoint, accessToken, searchTerms, filterTerms
       
       const filterOnlyParams = {
         $top: count,
-        $select: config.EMAIL_SELECT_FIELDS,
+        $select: config.FIELDS.email.list,
         $orderby: 'receivedDateTime desc'
       };
       
@@ -156,7 +156,7 @@ async function progressiveSearch(endpoint, accessToken, searchTerms, filterTerms
   
   const basicParams = {
     $top: count,
-    $select: config.EMAIL_SELECT_FIELDS,
+    $select: config.FIELDS.email.list,
     $orderby: 'receivedDateTime desc'
   };
   
@@ -184,7 +184,7 @@ async function progressiveSearch(endpoint, accessToken, searchTerms, filterTerms
 function buildSearchParams(searchTerms, filterTerms, count) {
   const params = {
     $top: count,
-    $select: config.EMAIL_SELECT_FIELDS,
+    $select: config.FIELDS.email.list,
     $orderby: 'receivedDateTime desc'
   };
   

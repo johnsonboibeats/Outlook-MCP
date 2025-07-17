@@ -31,7 +31,7 @@ async function handleReadEmail(args) {
     const baseEndpoint = sharedMailbox ? `users/${sharedMailbox}` : 'me';
     const endpoint = `${baseEndpoint}/messages/${encodeURIComponent(emailId)}`;
     const queryParams = {
-      $select: config.EMAIL_DETAIL_FIELDS
+      $select: config.FIELDS.email.detail
     };
     
     try {
