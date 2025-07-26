@@ -2,6 +2,10 @@
 
 A Model Context Protocol (MCP) server that provides Claude with access to Microsoft Outlook through the Microsoft Graph API. Features multi-account support, remote deployment capabilities, and comprehensive email, calendar, and folder management.
 
+<a href="https://glama.ai/mcp/servers/@johnsonboibeats/Outlook-MCP">
+  <img width="380" height="200" src="https://glama.ai/mcp/servers/@johnsonboibeats/Outlook-MCP/badge" alt="Outlook Server MCP server" />
+</a>
+
 ## Quick Start
 
 ### 1. Install Dependencies
